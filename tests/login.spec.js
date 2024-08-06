@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+//import { test, expect } from '@playwright/test';
 
 const { test, expect } = require('@playwright/test');
 require('dotenv').config();
 
 
 test('login test', async ({ page }) => {
-  await page.goto('https://medium.com/');
+  await page.goto(process.env.URL_PAGE2);
   await page.getByRole('link', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: 'Sign in with email' }).click();
   await page.getByRole('textbox').click();
