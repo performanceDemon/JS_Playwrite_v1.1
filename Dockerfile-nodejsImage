@@ -1,0 +1,54 @@
+# Usa Ubuntu LTS como base
+FROM ubuntu:22.04
+
+# Configura el entorno
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Actualiza e instala los paquetes necesarios
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common \
+    wget \
+    unzip \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatspi2.0-0 \
+    libgtk-3-0 \
+    nodejs \
+    npm \
+    openjdk-17-jdk \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Actualiza npm a la última versión y limpia la caché
+RUN npm install -g npm@latest && \
+    npm cache clean --force
+
+# Instala Playwright y las dependencias necesarias
+RUN npm install -D @playwright/test && \
+    npm install --save-dev allure-playwright
+
+# Instala Allure Commandline
+RUN curl -sSL https://github.com/allure-framework/allure2/releases/download/2.19.0/allure-2.19.0.zip -o allure.zip && \
+    unzip allure.zip -d /opt && \
+    ln -s /opt/allure-2.19.0/bin/allure /usr/local/bin/allure
+
+# Establece el directorio de trabajo
+WORKDIR /app
+
+# Copia los archivos del proyecto al contenedor
+COPY . .
+
+# Instala las dependencias del proyecto
+RUN npm install
+
+# Comando por defecto para ejecutar los tests
+CMD ["npx", "playwright", "test"]
