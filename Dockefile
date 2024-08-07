@@ -1,0 +1,64 @@
+# Usa la imagen base de Ubuntu
+FROM ubuntu:latest
+
+# Establece el directorio de trabajo en /app
+WORKDIR /app
+
+# Actualiza el sistema e instala dependencias necesarias
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common \
+    wget \
+    unzip \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatspi2.0-0 \
+    libgtk-3-0 \
+    nodejs \
+    npm
+
+# Instala Java 17
+RUN wget -O /tmp/openjdk-17_linux-x64_bin.tar.gz https://download.java.net/java/GA/jdk17/35/GPL/openjdk-17_linux-x64_bin.tar.gz && \
+    mkdir -p /usr/local/java && \
+    tar -xzf /tmp/openjdk-17_linux-x64_bin.tar.gz -C /usr/local/java && \
+    update-alternatives --install /usr/bin/java java /usr/local/java/jdk-17/bin/java 1 && \
+    update-alternatives --install /usr/bin/javac javac /usr/local/java/jdk-17/bin/javac 1 && \
+    update-alternatives --set java /usr/local/java/jdk-17/bin/java && \
+    update-alternatives --set javac /usr/local/java/jdk-17/bin/javac && \
+    rm /tmp/openjdk-17_linux-x64_bin.tar.gz
+
+# Instala Homebrew
+RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Instala Allure
+RUN brew install allure
+
+# Instala n y actualiza Node.js a la última versión
+RUN npm install -g n && \
+    n latest
+
+# Instala dependencias de Playwright y Allure
+RUN npm install -D @playwright/test && \
+    npm install dotenv && \
+    npm install --save-dev allure-playwright && \
+    npx playwright install
+
+# Copia el contenido del proyecto en el contenedor
+COPY . /app
+
+# Instala las dependencias del proyecto
+RUN npm install
+
+# Expone el puerto 8080 para VS Code Server (si lo necesitas)
+EXPOSE 8080
+
+# Comando para ejecutar tests y generar el reporte de Allure
+CMD ["sh", "-c", "npx playwright test && allure generate allure-results --clean -o allure-report && allure open allure-report"]

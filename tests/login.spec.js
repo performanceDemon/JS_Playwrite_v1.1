@@ -1,4 +1,4 @@
-
+const { test, expect } = require('@playwright/test');
 
 test('login test', async ({ page }) => {
   await page.goto(process.env.URL_PAGE2);
