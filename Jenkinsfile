@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Instalar dependencias') {
+            steps {
+                sh 'echo $SHELL' // Verificar entorno de shell
+                sh 'whoami' // Verificar usuario
+                sh 'pwd' // Verificar directorio actual
+
+                sh 'sudo apt-get update'
+                sh 'sudo apt-get install -y curl gnupg2'
+
+                // Instalar Node.js y npm
+                sh '''
+                    if ! command -v node &> /dev/null; then
+                        echo "Node.js no está instalado. Procediendo con la instalación..."
+                        curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+                        sudo apt-get install -y nodejs
+                    else
+                        echo "Node.js ya está instalado. Versión: $(node -v)"
+                    fi
+                '''
+
+                // Instalar Homebrew
+                sh '''
+                    if [ ! -d "/home/linuxbrew/.linuxbrew" ]; then
+                        echo "Homebrew no está instalado. Procediendo con la instalación..."
+                        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.profile
+                        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+                    else
+                        echo "Homebrew ya está instalado. Versión: $(brew --version)"
+                    fi
+                '''
+
+                // Instalar Allure
+                sh '''
+                    if [ -z "$(which brew)" ]; then
+                        echo "Homebrew no está instalado. No se puede instalar Allure."
+                     elif [ -z "$(which allure)" ] || [ "$(allure --version)" != "2.30.0" ]; then
+                        echo "Allure no está instalado o no es la versión correcta. Procediendo con la instalación..."
+                        brew install allure
+                    else
+                        echo "Allure ya está instalado. Versión: $(allure --version)"
+                    fi
+                '''
+            }
+        }
+
+        stage('Instalar dependencias de proyecto') {
+            steps {
+                sh 'npm install'
+                sh 'npx playwright install'
+            }
+        }
+
+        stage('Ejecutar pruebas') {
+            steps {
+                sh 'npx playwright test'
+            }
+        }
+
+        stage('Generar informe de Allure') {
+            steps {
+                sh 'allure generate allure-results --clean -o allure-report'
+            }
+        }
+    }
+}
