@@ -61,10 +61,5 @@ pipeline {
             }
         }
 
-        stage('Generar informe de Allure') {
-            steps {
-                sh 'allure generate allure-results --clean -o allure-report'
-            }
-        }
     }
 }

@@ -4,8 +4,6 @@ pipeline {
     stages {
         stage('Instalar dependencias') {
             steps {
-                stage('Instalar dependencias') {
-            steps {
                 sh 'echo $SHELL' // Verificar entorno de shell
                 sh 'whoami' // Verificar usuario
                 sh 'pwd' // Verificar directorio actual
@@ -38,19 +36,15 @@ pipeline {
 
                 // Instalar Allure
                 sh '''
-                    if ! command -v allure &> /dev/null; then
-                        echo "Allure no está instalado. Procediendo con la instalación..."
+                    if [ -z "$(which brew)" ]; then
+                        echo "Homebrew no está instalado. No se puede instalar Allure."
+                     elif [ -z "$(which allure)" ] || [ "$(allure --version)" != "2.30.0" ]; then
+                        echo "Allure no está instalado o no es la versión correcta. Procediendo con la instalación..."
                         brew install allure
                     else
                         echo "Allure ya está instalado. Versión: $(allure --version)"
                     fi
                 '''
-            }
-        }
-
-        stage('Clonar repositorio') {
-            steps {
-                git 'https://github.com/performanceDemon/JS_Playwrite_v1.1.git'
             }
         }
 
